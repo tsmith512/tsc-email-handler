@@ -5,7 +5,7 @@ const aws = new AwsClient({
   secretAccessKey: AWS_SECRET_KEY
 });
 
-const SES_ENDPOINT = 'https://email.us-east-1.amazonaws.com/';
+const SES_ENDPOINT = 'https://email.us-east-1.amazonaws.com/v2/email/outbound-emails';
 
 async function handleRequest(request) {
   // See tsmith512/tsmithcreative:_js/contact.js
@@ -13,25 +13,34 @@ async function handleRequest(request) {
 
   // @TODO: [Insert some validations here one day...]
 
-  // Build the email "object" (str) for SES.
-  const messageRaw =
-    `From: ${FROM_ADDRESS}
-    To: ${FROM_ADDRESS}
-    Reply-To: ${replyto}
-    Subject: Website Referral Form from ${from}
+  const messagePayload = {
+    "Destination": {
+      "ToAddresses": [ FROM_ADDRESS ],
+    },
+    "FromEmailAddress": FROM_ADDRESS,
+    "Source": FROM_ADDRESS,
+    "ReplyToAddresses": [ replyto ],
 
-    ${message}
-  `.replace(/\n[ ]+/g, '\n');
-
-  const sesPayload = `Action=SendRawEmail&Destinations.member.1=${encodeURIComponent(FROM_ADDRESS)}&RawMessage.Data=${encodeURIComponent(btoa(messageRaw))}`
+    "Content": {
+      "Simple": {
+        "Subject": {
+          "Charset": "UTF-8",
+          "Data": `Website Referral Form from ${from}`,
+        },
+        "Body": {
+          "Text": {
+            "Charset": "UTF-8",
+            "Data": message,
+          },
+        },
+      },
+    },
+  };
 
   // Build signed request with aws4fetch
   const signedRequest = await aws.sign(SES_ENDPOINT, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: sesPayload,
+    body: JSON.stringify(messagePayload),
   });
 
   // Send the SES request
