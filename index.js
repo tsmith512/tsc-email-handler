@@ -12,14 +12,36 @@ async function handleRequest(request) {
   const messagePayload = await readRequestBody(request);
 
   // Reformulate the payload for SES
+  const messageRaw =
+    `From: ${FROM_ADDRESS}
+    Reply-To: ${messagePayload.replyto}
+    Subject: Website Referral Form from ${messagePayload.from}
+
+    ${messagePayload.message}
+  `.replace(/\n[ ]+/g, '\n');
+
+  const sesPayload = `Action=SendRawEmail&Destinations.member.1=${encodeURIComponent(FROM_ADDRESS)}&RawMessage.Data=${btoa(messageRaw)}`
 
   // Sign it
+  const signedRequest = awair aws.sign(SES_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: sesPayload,
+  });
+
+  console.log(signedRequest);
 
   // Send it
+  const sesResponse = await fetch(signedRequest);
+
+  const responseInfo = await sesResponse.json()
+  console.log(responseInfo);
 
   // Return a 200 or an error (@TODO: And make the frontend handle an error...)
 
-  return new Response('Hello worker!', {
+  return new Response(JSON.stringify(responseInfo), {
     headers: { 'content-type': 'text/plain' },
   });
 }
