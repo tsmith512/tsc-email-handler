@@ -5,7 +5,7 @@ const aws = new AwsClient({
   secretAccessKey: AWS_SECRET_KEY
 });
 
-const SES_ENDPOINT = 'https://email.us-east-1.amazonaws.com/v2/email/outbound-emails';
+const SES_ENDPOINT = 'https://email.us-east-2.amazonaws.com/v2/email/outbound-emails';
 
 async function handleRequest(request) {
   // See tsmith512/tsmithcreative:_js/contact.js
