@@ -3,5 +3,5 @@ type = "webpack"
 webpack_config = "webpack.config.js"
 account_id = ""
 workers_dev = true
-route = ""
-zone_id = ""
+route = "tsmith.com/api/email"
+zone_id = "5085c5993158fe248a8dfed946d328a0"
