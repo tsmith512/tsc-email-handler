@@ -7,6 +7,12 @@ const aws = new AwsClient({
 
 const SES_ENDPOINT = 'https://email.us-east-2.amazonaws.com/v2/email/outbound-emails';
 
+const corsHeaders = new Headers({
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': '*',
+});
+
 async function handleRequest(request) {
   // See tsmith512/tsmithcreative:_js/contact.js
   const { from = "", replyto = FROM_ADDRESS, message = "" } = await request.json();
@@ -52,16 +58,35 @@ async function handleRequest(request) {
   if (ok) {
     return new Response(`SES responded okay ${status}`, {
       status: 200,
-      headers: { 'content-type': 'text/plain' },
+      headers: corsHeaders,
     });
   }
   else {
     return new Response(`SES responded with error ${status}`, {
       status: 500,
+      headers: corsHeaders,
     });
   }
 }
 
+async function handleOptions(request) {
+  return new Response(null, {status: 200, headers: corsHeaders});
+}
+
+async function handleBadReq(request) {
+  return new Response('Bad Request', {status: 400, headers: corsHeaders});
+}
+
 addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request));
+  switch (event.request.method) {
+    case 'POST':
+      event.respondWith(handleRequest(event.request));
+      break;
+    case 'OPTIONS':
+      event.respondWith(handleOptions(event.request));
+      break;
+    default:
+      event.respondWith(handleBadReq(event.request));
+      break;
+  }
 })
